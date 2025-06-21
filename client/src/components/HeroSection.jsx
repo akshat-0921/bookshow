@@ -1,35 +1,110 @@
-import React from 'react'
-import { assets } from '../assets/assets'
-import { ArrowRight, CalendarIcon, ClockIcon } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import React, { useState, useEffect } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import HeroBanner from './HeroBanner';
+import { assets } from '../assets/assets';
+
+const movies = [
+    {
+        title: 'Guardians of the Galaxy',
+        description: 'In a post-apocalyptic world...',
+        genres: ['Action', 'Adventure', 'Sci-Fi'],
+        year: '2018',
+        duration: '2h 8m',
+        backgroundImage: '/backgroundImage.png',
+        logo: assets.marvelLogo,
+        explorePath: '/movies',
+    },
+    {
+        title: 'Inception',
+        description: 'A thief who steals corporate secrets...',
+        genres: ['Action', 'Adventure', 'Thriller'],
+        year: '2010',
+        duration: '2h 28m',
+        backgroundImage: '/inception-bg.jpg',
+        logo: assets.inceptionLogo,
+        explorePath: '/movies',
+    },
+    {
+        title: 'Interstellar',
+        description: 'A team of explorers travel through a wormhole...',
+        genres: ['Sci-Fi', 'Drama'],
+        year: '2014',
+        duration: '2h 49m',
+        backgroundImage: '/interstellar-bg.jpg',
+        logo: assets.interstellarLogo,
+        explorePath: '/movies',
+    },
+];
+
+const variants = {
+    initial: { opacity: 0, scale: 1.1 },
+    animate: { opacity: 1, scale: 1, transition: { duration: 1.5 } },
+    exit: { opacity: 0, scale: 0.9, transition: { duration: 1.5 } },
+};
 
 const HeroSection = () => {
+    const [currentIndex, setCurrentIndex] = useState(0);
 
-    const navigate = useNavigate()
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setCurrentIndex((prev) => (prev + 1) % movies.length);
+        }, 6000); // Slide every 6 seconds (slightly longer for smoother viewing)
+
+        return () => clearInterval(interval);
+    }, []);
+
+    const prevSlide = () => {
+        setCurrentIndex((prev) => (prev === 0 ? movies.length - 1 : prev - 1));
+    };
+
+    const nextSlide = () => {
+        setCurrentIndex((prev) => (prev + 1) % movies.length);
+    };
+
+    const currentMovie = movies[currentIndex];
 
     return (
-        <div className='flex flex-col items-start justify-center gap-4 px-6 md:px-16 lg:px-36 bg-[url("/backgroundImage.png")] bg-cover bg-center h-screen'>
+        <div className="relative w-full h-screen overflow-hidden">
+            <AnimatePresence mode="wait">
+                <motion.div
+                    key={currentMovie.title}
+                    variants={variants}
+                    initial="initial"
+                    animate="animate"
+                    exit="exit"
+                    className="absolute inset-0"
+                >
+                    <HeroBanner {...currentMovie} />
+                </motion.div>
+            </AnimatePresence>
 
-            <img src={assets.marvelLogo} alt="" className="max-h-11 lg:h-11 mt-20"/>
-
-            <h1 className='text-5xl md:text-[70px] md:leading-18 font-semibold max-w-110'>Guardians <br /> of the Galaxy</h1>
-
-            <div className='flex items-center gap-4 text-gray-300'>
-                <span>Action | Adventure | Sci-Fi</span>
-                <div className='flex items-center gap-1'>
-                    <CalendarIcon className='w-4.5 h-4.5'/> 2018
-                </div>
-                <div className='flex items-center gap-1'>
-                    <ClockIcon className='w-4.5 h-4.5'/> 2h 8m
-                </div>
-            </div>
-            <p className='max-w-md text-gray-300'>In a post-apocalyptic world where cities ride on wheels and consume each other to survive, two people meet in London and try to stop a conspiracy.</p>
-            <button onClick={()=> navigate('/movies')} className='flex items-center gap-1 px-6 py-3 text-sm bg-primary hover:bg-primary-dull transition rounded-full font-medium cursor-pointer'>
-                Explore Movies
-                <ArrowRight className="w-5 h-5"/>
+            <button
+                onClick={prevSlide}
+                className="absolute left-5 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/60 text-white p-2 rounded-full z-10"
+            >
+                <ChevronLeft size={24} />
             </button>
-        </div>
-    )
-}
 
-export default HeroSection
+            <button
+                onClick={nextSlide}
+                className="absolute right-5 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/60 text-white p-2 rounded-full z-10"
+            >
+                <ChevronRight size={24} />
+            </button>
+
+            <div className="absolute bottom-5 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+                {movies.map((_, idx) => (
+                    <div
+                        key={idx}
+                        className={`w-3 h-3 rounded-full ${
+                            idx === currentIndex ? 'bg-white' : 'bg-gray-400'
+                        }`}
+                    />
+                ))}
+            </div>
+        </div>
+    );
+};
+
+export default HeroSection;
