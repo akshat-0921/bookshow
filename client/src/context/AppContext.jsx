@@ -77,7 +77,8 @@ export const AppProvider = ({ children })=>{
         axios,
         fetchIsAdmin,
         user, getToken, navigate, isAdmin, shows,
-        favoriteMovies, fetchFavoriteMovies, image_base_url
+        favoriteMovies, fetchFavoriteMovies
+        // , image_base_url
     }
 
     return (
