@@ -92,6 +92,7 @@ export const createBooking = async (req, res)=>{
         // })
         //
         // res.json({success: true, url: session.url})
+        res.json({success: true,message:'Booking successfully created'});
 
     } catch (error) {
         console.log(error.message);
