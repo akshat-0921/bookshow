@@ -1,172 +1,158 @@
-import React, { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { ArrowRight, Clock } from "lucide-react";
-import { motion } from "framer-motion";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import BlurCircle from "../components/BlurCircle";
-import Loading from "../components/Loading";
-import isoTimeFormat from "../lib/isoTimeFormat";
-import { useAppContext } from "../context/AppContext";
-import toast from "react-hot-toast";
+import React, { useEffect, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
+import { assets, dummyDateTimeData, dummyShowsData } from '../assets/assets'
+import Loading from '../components/Loading'
+import { ArrowRightIcon, ClockIcon } from 'lucide-react'
+import isoTimeFormat from '../lib/isoTimeFormat'
+import BlurCircle from '../components/BlurCircle'
+import toast from 'react-hot-toast'
+import { useAppContext } from '../context/AppContext'
 
-/**
- * SeatLayout — modernised interface with sticky timing sidebar and animated seat grid.
- */
-const SeatLayout: React.FC = () => {
-    const navigate = useNavigate();
-    const { id, date } = useParams();
+const SeatLayout = () => {
 
-    const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
-    const [selectedTime, setSelectedTime] = useState<any>(null);
-    const [show, setShow] = useState<any>(null);
-    const [occupiedSeats, setOccupiedSeats] = useState<string[]>([]);
+    const groupRows = [["A", "B"], ["C", "D"], ["E", "F"], ["G", "H"], ["I", "J"]]
 
-    const { axios, getToken, user } = useAppContext();
+    const {id, date } = useParams()
+    const [selectedSeats, setSelectedSeats] = useState([])
+    const [selectedTime, setSelectedTime] = useState(null)
+    const [show, setShow] = useState(null)
+    const [occupiedSeats, setOccupiedSeats] = useState([])
 
-    /* ===== helpers ===== */
-    const rows = [
-        "A",
-        "B",
-        "C",
-        "D",
-        "E",
-        "F",
-        "G",
-        "H",
-        "I",
-        "J",
-    ];
-    const seatsPerRow = 9;
+    const navigate = useNavigate()
 
-    const fetchShow = async () => {
+    const {axios, getToken, user} = useAppContext();
+
+    const getShow = async () =>{
         try {
-            const { data } = await axios.get(`/api/show/${id}`);
-            if (data.success) setShow(data);
-        } catch (err) {
-            console.error(err);
+            const { data } = await axios.get(`/api/show/${id}`)
+            if (data.success){
+                setShow(data)
+            }
+        } catch (error) {
+            console.log(error)
         }
-    };
+    }
 
-    const fetchOccupied = async () => {
-        if (!selectedTime) return;
+    const handleSeatClick = (seatId) =>{
+        if (!selectedTime) {
+            return toast("Please select time first")
+        }
+        if(!selectedSeats.includes(seatId) && selectedSeats.length > 4){
+            return toast("You can only select 5 seats")
+        }
+        if(occupiedSeats.includes(seatId)){
+            return toast('This seat is already booked')
+        }
+        setSelectedSeats(prev => prev.includes(seatId) ? prev.filter(seat => seat !== seatId) : [...prev, seatId])
+    }
+
+    const renderSeats = (row, count = 9)=>(
+        <div key={row} className="flex gap-2 mt-2">
+            <div className="flex flex-wrap items-center justify-center gap-2">
+                {Array.from({ length: count }, (_, i) => {
+                    const seatId = `${row}${i + 1}`;
+                    return (
+                        <button key={seatId} onClick={() => handleSeatClick(seatId)} className={`h-8 w-8 rounded border border-primary/60 cursor-pointer
+                         ${selectedSeats.includes(seatId) && "bg-primary text-white"} 
+                         ${occupiedSeats.includes(seatId) && "opacity-50"}`}>
+                            {seatId}
+                        </button>
+                    );
+                })}
+            </div>
+        </div>
+    )
+
+    const getOccupiedSeats = async ()=>{
         try {
-            const { data } = await axios.get(`/api/booking/seats/${selectedTime.showId}`);
-            if (data.success) setOccupiedSeats(data.occupiedSeats);
-            else toast.error(data.message);
-        } catch (err) {
-            console.error(err);
+            const { data } = await axios.get(`/api/booking/seats/${selectedTime.showId}`)
+            if (data.success) {
+                setOccupiedSeats(data.occupiedSeats)
+            }else{
+                toast.error(data.message)
+            }
+        } catch (error) {
+            console.log(error)
         }
-    };
+    }
 
-    const toggleSeat = (seatId: string) => {
-        if (!selectedTime) return toast("Pick a time first!");
-        if (occupiedSeats.includes(seatId)) return toast("Seat already booked");
-        if (!selectedSeats.includes(seatId) && selectedSeats.length >= 5)
-            return toast("Maximum 5 seats");
-        setSelectedSeats((prev) =>
-            prev.includes(seatId) ? prev.filter((s) => s !== seatId) : [...prev, seatId],
-        );
-    };
 
-    const checkout = async () => {
+    const bookTickets = async ()=>{
         try {
-            if (!user) return toast.error("Please login to proceed");
-            if (!selectedTime || !selectedSeats.length)
-                return toast.error("Select time & seats first");
+            if(!user) return toast.error('Please login to proceed')
 
-            const { data } = await axios.post(
-                "/api/booking/create",
-                { showId: selectedTime.showId, selectedSeats },
-                { headers: { Authorization: `Bearer ${await getToken()}` } },
-            );
-            if (data.success) window.location.href = data.url;
-            else toast.error(data.message);
-        } catch (err: any) {
-            toast.error(err.message);
+            if(!selectedTime || !selectedSeats.length) return toast.error('Please select a time and seats');
+
+            const {data} = await axios.post('/api/booking/create', {showId: selectedTime.showId, selectedSeats}, {headers: { Authorization: `Bearer ${await getToken()}` }});
+
+            if (data.success){
+                window.location.href = data.url;
+            }else{
+                toast.error(data.message)
+            }
+        } catch (error) {
+            toast.error(error.message)
         }
-    };
+    }
 
-    /* ===== effects ===== */
-    useEffect(() => {
-        fetchShow();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [id]);
+    useEffect(()=>{
+        getShow()
+    },[])
 
-    useEffect(() => {
-        fetchOccupied();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [selectedTime]);
+    useEffect(()=>{
+        if(selectedTime){
+            getOccupiedSeats()
+        }
+    },[selectedTime])
 
-    /* ===== render helpers ===== */
-    const SeatButton = ({ seatId }: { seatId: string }) => {
-        const isOccupied = occupiedSeats.includes(seatId);
-        const isSelected = selectedSeats.includes(seatId);
-        return (
-            <motion.button
-                whileTap={{ scale: 0.9 }}
-                disabled={isOccupied}
-                onClick={() => toggleSeat(seatId)}
-                className={`h-8 w-8 rounded-md border text-xs transition-all ${isOccupied ? "cursor-not-allowed border-gray-500 bg-gray-600 text-gray-800" : isSelected ? "border-primary bg-primary text-white" : "border-primary/50 hover:bg-primary/10"}`}
-            >
-                {seatId}
-            </motion.button>
-        );
-    };
-
-    if (!show) return <Loading />;
-
-    return (
-        <div className="relative mx-auto flex max-w-7xl flex-col gap-12 px-4 py-16 lg:flex-row lg:gap-24 lg:px-8">
-            {/* === Time Sidebar === */}
-            <aside className="lg:w-60 lg:flex-shrink-0">
-                <Card className="sticky top-28 h-max bg-black/60 backdrop-blur">
-                    <CardContent className="space-y-5 p-6">
-                        <h2 className="text-lg font-semibold text-white">Available Timings</h2>
-                        {show.dateTime[date as string].map((t: any) => (
-                            <Button
-                            key={t.time}
-                                 variant={selectedTime?.time === t.time ? "default" : "secondary"}
-                                 className="w-full justify-start gap-2"
-                                 onClick={() => setSelectedTime(t)}
-                    >
-                        <Clock className="h-4 w-4" /> {isoTimeFormat(t.time)}
-                    </Button>
-                    ))}
-                </CardContent>
-            </Card>
-        </aside>
-
-{/* === Seat Grid === */}
-    <section className="relative flex flex-1 flex-col items-center">
-        <BlurCircle top="-6rem" left="-6rem" />
-        <BlurCircle bottom="-6rem" right="-6rem" />
-
-        <h1 className="mb-4 text-2xl font-semibold text-white">Pick your seats</h1>
-        <img src={assets.screenImage} alt="screen" className="mb-2 w-1/2 max-w-xs" />
-        <p className="mb-10 text-sm text-gray-400">SCREEN</p>
-
-        <div className="space-y-6">
-            {rows.map((row) => (
-                <div key={row} className="flex items-center justify-center gap-3">
-                    {Array.from({ length: seatsPerRow }, (_, i) => (
-                        <SeatButton key={`${row}${i + 1}`} seatId={`${row}${i + 1}`} />
+    return show ? (
+        <div className='flex flex-col md:flex-row px-6 md:px-16 lg:px-40 py-30 md:pt-50'>
+            {/* Available Timings */}
+            <div className='w-60 bg-primary/10 border border-primary/20 rounded-lg py-10 h-max md:sticky md:top-30'>
+                <p className='text-lg font-semibold px-6'>Available Timings</p>
+                <div className='mt-5 space-y-1'>
+                    {show.dateTime[date].map((item)=>(
+                        <div key={item.time} onClick={()=> setSelectedTime(item)} className={`flex items-center gap-2 px-6 py-2 w-max rounded-r-md cursor-pointer transition ${selectedTime?.time === item.time ? "bg-primary text-white" : "hover:bg-primary/20"}`}>
+                            <ClockIcon className="w-4 h-4"/>
+                            <p className='text-sm'>{isoTimeFormat(item.time)}</p>
+                        </div>
                     ))}
                 </div>
-            ))}
+            </div>
+
+            {/* Seats Layout */}
+            <div className='relative flex-1 flex flex-col items-center max-md:mt-16'>
+                <BlurCircle top="-100px" left="-100px"/>
+                <BlurCircle bottom="0" right="0"/>
+                <h1 className='text-2xl font-semibold mb-4'>Select your seat</h1>
+                <img src={assets.screenImage} alt="screen" />
+                <p className='text-gray-400 text-sm mb-6'>SCREEN SIDE</p>
+
+                <div className='flex flex-col items-center mt-10 text-xs text-gray-300'>
+                    <div className='grid grid-cols-2 md:grid-cols-1 gap-8 md:gap-2 mb-6'>
+                        {groupRows[0].map(row => renderSeats(row))}
+                    </div>
+
+                    <div className='grid grid-cols-2 gap-11'>
+                        {groupRows.slice(1).map((group, idx)=>(
+                            <div key={idx}>
+                                {group.map(row => renderSeats(row))}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                <button onClick={bookTickets} className='flex items-center gap-1 mt-20 px-10 py-3 text-sm bg-primary hover:bg-primary-dull transition rounded-full font-medium cursor-pointer active:scale-95'>
+                    Proceed to Checkout
+                    <ArrowRightIcon strokeWidth={3} className="w-4 h-4"/>
+                </button>
+
+
+            </div>
         </div>
+    ) : (
+        <Loading />
+    )
+}
 
-        <Button
-            size="lg"
-            className="mt-16 flex items-center gap-2 rounded-full"
-            onClick={checkout}
-        >
-            Checkout
-            <ArrowRight className="h-4 w-4" strokeWidth={3} />
-        </Button>
-    </section>
-</div>
-);
-};
-
-export default SeatLayout;
+export default SeatLayout
