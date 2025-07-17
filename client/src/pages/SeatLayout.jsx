@@ -7,6 +7,7 @@ import isoTimeFormat from '../lib/isoTimeFormat'
 import BlurCircle from '../components/BlurCircle'
 import toast from 'react-hot-toast'
 import { useAppContext } from '../context/AppContext'
+import { CheckCircle } from 'lucide-react';
 
 const SeatLayout = () => {
 
@@ -76,24 +77,49 @@ const SeatLayout = () => {
         }
     }
 
-
-    const bookTickets = async ()=>{
+    const bookTickets = async () => {
         try {
-            if(!user) return toast.error('Please login to proceed')
+            if (!user) return toast.error('Please login to proceed');
 
-            if(!selectedTime || !selectedSeats.length) return toast.error('Please select a time and seats');
+            if (!selectedTime || !selectedSeats.length)
+                return toast.error('Please select a time and seats');
 
-            const {data} = await axios.post('/api/booking/create', {showId: selectedTime.showId, selectedSeats}, {headers: { Authorization: `Bearer ${await getToken()}` }});
+            const { data } = await axios.post(
+                '/api/booking/create',
+                { showId: selectedTime.showId, selectedSeats },
+                { headers: { Authorization: `Bearer ${await getToken()}` } }
+            );
 
-            if (data.success){
-                window.location.href = data.url;
-            }else{
-                toast.error(data.message)
+            if (data.success) {
+                toast.custom(
+                    (t) => (
+                        <div
+                            className={`flex items-center gap-3 bg-green-500 text-white px-6 py-4 rounded-lg shadow-xl transition ${
+                                t.visible ? 'animate-enter' : 'animate-leave'
+                            }`}
+                        >
+                            <CheckCircle className="h-6 w-6" />
+                            <div>
+                                <p className="font-semibold">Booking Successful!</p>
+                                <p className="text-sm">Enjoy your movie! 🎬🍿</p>
+                            </div>
+                        </div>
+                    ),
+                    { duration: 3000 }
+                );
+
+                // Redirect to homepage after a short delay to let the toast appear
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 1500);
+            } else {
+                toast.error(data.message);
             }
         } catch (error) {
-            toast.error(error.message)
+            toast.error(error.message || 'Something went wrong!');
         }
-    }
+    };
+
 
     useEffect(()=>{
         getShow()
@@ -111,13 +137,18 @@ const SeatLayout = () => {
             <div className='w-60 bg-primary/10 border border-primary/20 rounded-lg py-10 h-max md:sticky md:top-30'>
                 <p className='text-lg font-semibold px-6'>Available Timings</p>
                 <div className='mt-5 space-y-1'>
-                    {show.dateTime[date].map((item)=>(
-                        <div key={item.time} onClick={()=> setSelectedTime(item)} className={`flex items-center gap-2 px-6 py-2 w-max rounded-r-md cursor-pointer transition ${selectedTime?.time === item.time ? "bg-primary text-white" : "hover:bg-primary/20"}`}>
-                            <ClockIcon className="w-4 h-4"/>
-                            <p className='text-sm'>{isoTimeFormat(item.time)}</p>
-                        </div>
-                    ))}
+                    {(show.dateTime?.[date] ?? []).length > 0 ? (
+                        show.dateTime[date].map((item) => (
+                            <div key={item.time} onClick={() => setSelectedTime(item)} className={`flex items-center gap-2 px-6 py-2 w-max rounded-r-md cursor-pointer transition ${selectedTime?.time === item.time ? "bg-primary text-white" : "hover:bg-primary/20"}`}>
+                                <ClockIcon className="w-4 h-4"/>
+                                <p className='text-sm'>{isoTimeFormat(item.time)}</p>
+                            </div>
+                        ))
+                    ) : (
+                        <p className="text-sm text-gray-500 px-6">No shows available for this date.</p>
+                    )}
                 </div>
+
             </div>
 
             {/* Seats Layout */}
