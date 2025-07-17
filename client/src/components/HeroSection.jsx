@@ -6,23 +6,23 @@ import { assets } from '../assets/assets';
 
 const movies = [
     {
-        title: 'Guardians of the Galaxy',
-        description: 'In a post-apocalyptic world...',
-        genres: ['Action', 'Adventure', 'Sci-Fi'],
-        year: '2018',
-        duration: '2h 8m',
-        backgroundImage: '/backgroundImage.png',
-        logo: assets.marvelLogo,
-        explorePath: '/movies',
-    },
-    {
         title: 'Inception',
         description: 'A thief who steals corporate secrets...',
         genres: ['Action', 'Adventure', 'Thriller'],
         year: '2010',
         duration: '2h 28m',
-        backgroundImage: '/inception-bg.jpg',
+        backgroundImage: assets.inceptionbackground,
         logo: assets.inceptionLogo,
+        explorePath: '/movies',
+    },
+    {
+        title: 'Guardians of the Galaxy',
+        description: 'In a post-apocalyptic world...',
+        genres: ['Action', 'Adventure', 'Sci-Fi'],
+        year: '2018',
+        duration: '2h 8m',
+        backgroundImage: assets.marvelbackground,
+        logo: assets.marvelLogo,
         explorePath: '/movies',
     },
     {
@@ -31,7 +31,7 @@ const movies = [
         genres: ['Sci-Fi', 'Drama'],
         year: '2014',
         duration: '2h 49m',
-        backgroundImage: '/interstellar-bg.jpg',
+        backgroundImage: assets.Interstellar,
         logo: assets.interstellarLogo,
         explorePath: '/movies',
     },
