@@ -7,7 +7,7 @@ import profile from './profile.png'
 import marvelbackground from './backgroundImage.png'
 import inceptionbackground from './inception_background.png'
 import Interstellar from './int.jpg'
-import nlogo from './logo.svg'
+import nlogo from './nlogo.svg'
 
 export const assets = {
     logo,
