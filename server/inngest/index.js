@@ -29,7 +29,6 @@ const syncUserDeletion = inngest.createFunction(
     {id: 'delete-user-with-clerk'},
     { event: 'clerk/user.deleted' },
     async ({ event })=>{
-
         const {id} = event.data
         await User.findByIdAndDelete(id)
     }
@@ -105,7 +104,6 @@ const sendBookingConfirmationEmail = inngest.createFunction(
         })
     }
 )
-
 
 // Inngest Function to send reminders
 const sendShowReminders = inngest.createFunction(
@@ -215,7 +213,6 @@ const sendNewShowNotifications = inngest.createFunction(
 
     }
 )
-
 
 export const functions = [
     syncUserCreation,
